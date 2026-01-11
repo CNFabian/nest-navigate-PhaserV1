@@ -1,3 +1,6 @@
+import { ModulesAPI } from '../services/ModulesAPI';
+import { ProgressAPI } from '../services/ProgressAPI';
+
 export class GameState {
   private static instance: GameState;
   
