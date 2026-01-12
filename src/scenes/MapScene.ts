@@ -7,6 +7,12 @@ export class MapScene extends Phaser.Scene {
   private userProgress: any = null;
   private neighborhoods: Phaser.GameObjects.Container[] = [];
   private cameraControls: Phaser.Cameras.Controls.SmoothedKeyControl | null = null;
+  
+  // Tutorial properties
+  private tutorialActive: boolean = false;
+  private tutorialStep: number = 0;
+  private tutorialBox: Phaser.GameObjects.Container | null = null;
+  private tutorialButton: Phaser.GameObjects.Container | null = null;
 
   constructor() {
     super({ key: 'MapScene' });
@@ -49,6 +55,7 @@ export class MapScene extends Phaser.Scene {
       this.createNeighborhoodsFromBackend();
       this.setupCameraControls();
       this.addUIText();
+      this.createTutorialButton();
 
     } catch (error) {
       loadingText.setText('Error loading modules\nPlease refresh the page');
@@ -332,6 +339,238 @@ export class MapScene extends Phaser.Scene {
     );
     title.setOrigin(0.5);
     title.setScrollFactor(0);
+  }
+
+  private createTutorialButton() {
+    const buttonWidth = 120;
+    const buttonHeight = 40;
+    const padding = 20;
+
+    const container = this.add.container(
+      this.cameras.main.width - buttonWidth - padding,
+      padding
+    );
+    container.setScrollFactor(0);
+    container.setDepth(1000);
+
+    // Button background
+    const bg = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x4CAF50);
+    bg.setInteractive({ useHandCursor: true });
+
+    // Button text
+    const text = this.add.text(0, 0, 'Tutorial', {
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    });
+    text.setOrigin(0.5);
+
+    container.add([bg, text]);
+
+    // Hover effects
+    bg.on('pointerover', () => {
+      bg.setFillStyle(0x45a049);
+    });
+
+    bg.on('pointerout', () => {
+      bg.setFillStyle(0x4CAF50);
+    });
+
+    bg.on('pointerdown', () => {
+      this.startTutorial();
+    });
+
+    this.tutorialButton = container;
+  }
+
+  private startTutorial() {
+    this.tutorialActive = true;
+    this.tutorialStep = 0;
+    this.showTutorialStep();
+  }
+
+  private showTutorialStep() {
+    // Remove existing tutorial box if any
+    if (this.tutorialBox) {
+      this.tutorialBox.destroy();
+      this.tutorialBox = null;
+    }
+
+    const tutorialSteps = [
+      {
+        title: 'Welcome to Your Learning Journey!',
+        text: 'Hi there! I\'m Nesty, your guide! This is your personalized learning map. Each neighborhood represents a different module with lessons to complete.'
+      },
+      {
+        title: 'Navigation Controls',
+        text: 'Let me show you how to get around! You can navigate the map by:\n• Clicking and dragging to pan\n• Using arrow keys to move\n• Scrolling with your mouse wheel to zoom in and out'
+      },
+      {
+        title: 'Neighborhoods & Progress',
+        text: 'See those colorful circles? Green neighborhoods are unlocked and ready to explore. Gray ones are locked until you complete previous modules. Click on any unlocked neighborhood to start learning!'
+      },
+      {
+        title: 'Ready to Begin?',
+        text: 'You\'re all set! Click on the first neighborhood to start your learning journey. If you need help again, just click the Tutorial button in the top right. Good luck!'
+      }
+    ];
+
+    if (this.tutorialStep >= tutorialSteps.length) {
+      this.tutorialActive = false;
+      return;
+    }
+
+    const step = tutorialSteps[this.tutorialStep];
+    const boxWidth = 450;
+    const boxHeight = 200;
+    const characterSize = 100;
+    const padding = 20;
+
+    const container = this.add.container(
+      padding + boxWidth / 2,
+      this.cameras.main.height - padding - boxHeight / 2
+    );
+    container.setScrollFactor(0);
+    container.setDepth(2000);
+
+    // Semi-transparent overlay
+    const overlay = this.add.rectangle(
+      this.cameras.main.width / 2 - (padding + boxWidth / 2),
+      (this.cameras.main.height - padding - boxHeight / 2) - this.cameras.main.height / 2,
+      this.cameras.main.width,
+      this.cameras.main.height,
+      0x000000,
+      0.5
+    );
+    overlay.setOrigin(0.5);
+
+    // Box background
+    const box = this.add.rectangle(0, 0, boxWidth, boxHeight, 0xffffff);
+    box.setStrokeStyle(4, 0x4CAF50);
+
+    // Character positioned to the left of the box
+    const charX = -boxWidth / 2 - characterSize / 2 - 20;
+    const charY = 0;
+    
+    // Character circle background
+    const characterCircle = this.add.circle(charX, charY, characterSize / 2, 0x4CAF50);
+    
+    // Character face - simple friendly design
+    const faceGraphics = this.add.graphics();
+    
+    // Eyes
+    faceGraphics.fillStyle(0xffffff, 1);
+    faceGraphics.fillCircle(charX - 15, charY - 10, 10);
+    faceGraphics.fillCircle(charX + 15, charY - 10, 10);
+    
+    // Pupils
+    faceGraphics.fillStyle(0x000000, 1);
+    faceGraphics.fillCircle(charX - 15, charY - 10, 5);
+    faceGraphics.fillCircle(charX + 15, charY - 10, 5);
+    
+    // Smile
+    faceGraphics.lineStyle(4, 0xffffff, 1);
+    faceGraphics.beginPath();
+    faceGraphics.arc(charX, charY + 5, 25, Phaser.Math.DegToRad(30), Phaser.Math.DegToRad(150), false);
+    faceGraphics.strokePath();
+    
+    // Character name badge below
+    const nameBg = this.add.rectangle(charX, charY + characterSize / 2 + 20, 80, 25, 0xffffff);
+    nameBg.setStrokeStyle(2, 0x4CAF50);
+    
+    const characterName = this.add.text(charX, charY + characterSize / 2 + 20, 'Nesty', {
+      fontSize: '14px',
+      color: '#4CAF50',
+      fontStyle: 'bold'
+    });
+    characterName.setOrigin(0.5);
+
+    // Speech bubble pointer (triangle pointing to character)
+    const bubblePointer = this.add.triangle(
+      -boxWidth / 2 - 10,
+      0,
+      0, 0,
+      -15, -12,
+      -15, 12,
+      0xffffff
+    );
+    bubblePointer.setStrokeStyle(2, 0x4CAF50);
+
+    // Title
+    const title = this.add.text(-boxWidth / 2 + 20, -60, step.title, {
+      fontSize: '18px',
+      color: '#000000',
+      fontStyle: 'bold',
+      align: 'left',
+      wordWrap: { width: boxWidth - 40 }
+    });
+    title.setOrigin(0, 0.5);
+
+    // Text content
+    const text = this.add.text(-boxWidth / 2 + 20, -10, step.text, {
+      fontSize: '14px',
+      color: '#333333',
+      align: 'left',
+      wordWrap: { width: boxWidth - 40 },
+      lineSpacing: 4
+    });
+    text.setOrigin(0, 0.5);
+
+    // Next button
+    const buttonWidth = 100;
+    const buttonHeight = 32;
+    const nextButton = this.add.rectangle(boxWidth / 2 - 60, boxHeight / 2 - 25, buttonWidth, buttonHeight, 0x4CAF50);
+    nextButton.setInteractive({ useHandCursor: true });
+
+    const nextText = this.add.text(boxWidth / 2 - 60, boxHeight / 2 - 25, 
+      this.tutorialStep < tutorialSteps.length - 1 ? 'Next' : 'Got it!', 
+      {
+        fontSize: '14px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }
+    );
+    nextText.setOrigin(0.5);
+
+    // Hover effects
+    nextButton.on('pointerover', () => {
+      nextButton.setFillStyle(0x45a049);
+    });
+
+    nextButton.on('pointerout', () => {
+      nextButton.setFillStyle(0x4CAF50);
+    });
+
+    nextButton.on('pointerdown', () => {
+      this.tutorialStep++;
+      this.showTutorialStep();
+    });
+
+    // Step indicator
+    const stepIndicator = this.add.text(-boxWidth / 2 + 20, boxHeight / 2 - 25, 
+      `Step ${this.tutorialStep + 1} of ${tutorialSteps.length}`, 
+      {
+        fontSize: '12px',
+        color: '#666666'
+      }
+    );
+    stepIndicator.setOrigin(0, 0.5);
+
+    container.add([
+      overlay, 
+      characterCircle, 
+      faceGraphics, 
+      nameBg,
+      characterName, 
+      box, 
+      bubblePointer,
+      title, 
+      text, 
+      nextButton, 
+      nextText, 
+      stepIndicator
+    ]);
+    this.tutorialBox = container;
   }
 
   private onNeighborhoodClick(name: string, moduleId: string) {

@@ -14,7 +14,7 @@ if (!token) {
   const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     parent: 'game-container',
-    width: window.innerWidth - 192, // Subtract sidebar width
+    width: window.innerWidth,
     height: window.innerHeight,
     backgroundColor: '#ffffff',
     physics: {
@@ -36,7 +36,7 @@ if (!token) {
 
   // Handle window resize
   window.addEventListener('resize', () => {
-    game.scale.resize(window.innerWidth - 192, window.innerHeight);
+    game.scale.resize(window.innerWidth, window.innerHeight);
   });
 
   // Export game instance for debugging
